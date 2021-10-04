@@ -32,7 +32,7 @@ func (s *AssemblySpot) AssembleVehicle() (*vehicle.Car, error) {
 	if s.vehicleToAssemble == nil {
 		return nil, errors.New("no vehicle set to start assembling")
 	}
-
+	s.assemblyLog = ""
 	var (
 		wg       sync.WaitGroup
 		pipeline = []func(*sync.WaitGroup){

@@ -3,7 +3,6 @@ package factory
 import (
 	".main.go/assemblyspot"
 	".main.go/vehicle"
-	"fmt"
 )
 
 const assemblySpots int = 5
@@ -34,15 +33,14 @@ func New() *Factory {
 
 //HINT: this function is currently not returning anything, make it return right away every single vehicle once assembled,
 //(Do not wait for all of them to be assembled to return them all, send each one ready over to main)
-func (f *Factory) StartAssemblingProcess(amountOfVehicles int, vehiclesAssembled chan<- *assemblyspot.AssemblySpot) {
+func (f *Factory) StartAssemblingProcess(amountOfVehicles int, vehiclesAssembled chan<- vehicle.Car) {
 	vehicleList := f.generateVehicleLots(amountOfVehicles)
 	vehicleListChannel := make(chan vehicle.Car, amountOfVehicles)
 	for i := 0; i < assemblySpots; i++ {
 		go func() {
-			for vehicle := range vehicleListChannel {
-				fmt.Println("Assembling vehicle...")
+			for vehicleElement := range vehicleListChannel {
 				idleSpot := <-f.AssemblingSpots
-				idleSpot.SetVehicle(&vehicle)
+				idleSpot.SetVehicle(&vehicleElement)
 				vehicle, err := idleSpot.AssembleVehicle()
 
 				if err != nil {
@@ -51,18 +49,18 @@ func (f *Factory) StartAssemblingProcess(amountOfVehicles int, vehiclesAssembled
 
 				vehicle.TestingLog = f.testCar(vehicle)
 				vehicle.AssembleLog = idleSpot.GetAssembledLogs()
-				fmt.Println(idleSpot)
 
-				// Returning to the read only channel in the main.go file
-				vehiclesAssembled <- idleSpot
 				idleSpot.SetVehicle(nil)
 				f.AssemblingSpots <- idleSpot
+
+				// Returning to the read only channel in the main.go file
+				vehiclesAssembled <- *vehicle
 			}
 		}()
 	}
 
-	for _, vehicle := range vehicleList {
-		vehicleListChannel <- vehicle
+	for _, vehicleElement := range vehicleList {
+		vehicleListChannel <- vehicleElement
 	}
 
 	defer close(vehicleListChannel)
